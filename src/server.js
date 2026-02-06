@@ -44,7 +44,7 @@ app.get('/projects', async (req, res) => {
 app.get('/projects/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const project = await prisma.project.findUnique({ where: { id: Number(id) } });
+    const project = await prisma.project.findUnique({ where: { id } });
     if (!project) return res.status(404).json({ error: 'Project not found' });
     res.json(project);
   } catch (error) {
@@ -58,7 +58,7 @@ app.put('/projects/:id', async (req, res) => {
     const { id } = req.params;
     const { name, description } = req.body;
     const project = await prisma.project.update({
-      where: { id: Number(id) },
+      where: { id },
       data: { name, description }
     });
     res.json(project);
@@ -72,7 +72,7 @@ app.put('/projects/:id', async (req, res) => {
 app.delete('/projects/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.project.delete({ where: { id: Number(id) } });
+    await prisma.project.delete({ where: { id } });
     res.status(204).send();
   } catch (error) {
     if (error.code === 'P2025') return res.status(404).json({ error: 'Project not found' });
@@ -89,7 +89,7 @@ app.post('/spaces', async (req, res) => {
     if (!projectId) return res.status(400).json({ error: 'Missing projectId' });
 
     const space = await prisma.space.create({
-      data: { name, projectId: Number(projectId) }
+      data: { name, projectId }
     });
     res.status(201).json(space);
   } catch (error) {
@@ -111,7 +111,7 @@ app.get('/spaces', async (req, res) => {
 app.get('/spaces/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const space = await prisma.space.findUnique({ where: { id: Number(id) } });
+    const space = await prisma.space.findUnique({ where: { id } });
     if (!space) return res.status(404).json({ error: 'Space not found' });
     res.json(space);
   } catch (error) {
@@ -125,8 +125,8 @@ app.put('/spaces/:id', async (req, res) => {
     const { id } = req.params;
     const { name, projectId } = req.body;
     const space = await prisma.space.update({
-      where: { id: Number(id) },
-      data: { name, projectId: projectId ? Number(projectId) : undefined }
+      where: { id },
+      data: { name, projectId }
     });
     res.json(space);
   } catch (error) {
@@ -139,7 +139,7 @@ app.put('/spaces/:id', async (req, res) => {
 app.delete('/spaces/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.space.delete({ where: { id: Number(id) } });
+    await prisma.space.delete({ where: { id } });
     res.status(204).send();
   } catch (error) {
     if (error.code === 'P2025') return res.status(404).json({ error: 'Space not found' });
@@ -161,7 +161,7 @@ app.post('/tasks', async (req, res) => {
         status,
         priority,
         assignee,
-        spaceId: spaceId ? Number(spaceId) : null
+        spaceId: spaceId || null
       }
     });
     res.status(201).json(task);
@@ -184,7 +184,7 @@ app.get('/tasks', async (req, res) => {
 app.get('/tasks/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const task = await prisma.task.findUnique({ where: { id: Number(id) } });
+    const task = await prisma.task.findUnique({ where: { id } });
     if (!task) return res.status(404).json({ error: 'Task not found' });
     res.json(task);
   } catch (error) {
@@ -198,14 +198,14 @@ app.put('/tasks/:id', async (req, res) => {
     const { id } = req.params;
     const { title, desc, status, priority, assignee, spaceId } = req.body;
     const task = await prisma.task.update({
-      where: { id: Number(id) },
+      where: { id },
       data: {
         title,
         desc,
         status,
         priority,
         assignee,
-        spaceId: spaceId !== undefined ? (spaceId ? Number(spaceId) : null) : undefined
+        spaceId: spaceId !== undefined ? spaceId : undefined
       }
     });
     res.json(task);
@@ -219,7 +219,7 @@ app.put('/tasks/:id', async (req, res) => {
 app.delete('/tasks/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.task.delete({ where: { id: Number(id) } });
+    await prisma.task.delete({ where: { id } });
     res.status(204).send();
   } catch (error) {
     if (error.code === 'P2025') return res.status(404).json({ error: 'Task not found' });
