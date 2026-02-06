@@ -11,7 +11,8 @@
     "start": "node src/server.js",
     "test:backend": "vitest run backend/",
     "test:frontend": "vitest run frontend/",
-    "test": "npm run test:backend && npm run test:frontend"
+    "test": "npm run test:backend && npm run test:frontend",
+    "seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",
