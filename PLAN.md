@@ -1,14 +1,1 @@
-# ClawJira Overhaul Plan 🐾 (Synced to GitHub)
-
-## Vision
-Sleek Jira clone: Projects → Spaces → Tasks Kanban. Tailwind React, Zustand, DnD, dark mode.
-
-## Phases
-1. ✅ Phase 1: Frontend skeleton + Projects CRUD (89f59a6 on GitHub).
-2. ✅ Phase 2: Nested Spaces UI (/projects/:id).
-3. **Phase 3**: Tasks Kanban in Space (DnD columns).
-4. Phase 4: Task modal/filters.
-5. Phase 5: Dashboard/mobile.
-6. Phase 6: PWA/auth.
-
-**Rule**: Every phase: proofs (ls/build/deploy/curl/snap/diff), git push origin/main **verified on GitHub**.
+# ClawJira Development Plan 🐾\n\n## Current State Assessment\n- UI loads at https://localhost:8443/ (Vite build served via nginx proxy?)\n- Backend: Node/Express + Prisma/SQLite, script `npm run dev` starts server.js on port 3000?\n- Issues: No actions work (likely API endpoints broken/missing CORS/DB).\n- Git: Clean, up-to-date with GitHub main (https://github.com/matekolonics/claw-jira).\n\n## Goals\n1. **Fix Core Functionality**: CRUD for Projects/Spaces/Tasks via API/UI.\n2. **UI Polish**: Cleaner design, dark mode, responsive Kanban.\n3. **Features**: Drag-drop, filters, auth (later), PWA.\n4. **Deploy**: Vercel-ready, production build.\n\n## Step-by-Step Tasks\n\n### Phase 1: Backend Fixes (Critical)\n1. Verify/Run server: `npm run dev`, check logs for DB errors.\n2. Test APIs: curl POST /api/projects, check Prisma schema/migrations.\n3. Fix CORS, routes (projects/spaces/tasks).\n4. Seed sample data.\n\n### Phase 2: Frontend Integration\n5. Ensure fetch calls to backend (localhost:3000/api from frontend? Proxy?)\n6. Fix forms/modals for create/edit/delete.\n7. Implement DnD for Kanban (react-beautiful-dnd).\n\n### Phase 3: UI/UX Improvements\n8. Tailwind: Modern Jira-like theme, dark mode (zustand toggle).\n9. Toast notifications polish.\n10. Mobile/responsive Kanban.\n\n### Phase 4: Advanced Features\n11. Task filters/search, assignees, due dates.\n12. Dashboard overview.\n13. Basic auth/JWT.\n14. PWA manifest.\n\n### Phase 5: Testing & Deploy\n15. Vitest: Backend/Frontend tests pass.\n16. Build/deploy to Vercel.\n\n## Workflow\n- Delegate each numbered task to grok-code-fast sub-agent.\n- Sub-agent: Analyze, edit files, test (npm test/dev/curl), commit/push.\n- After each: Verify changes on GitHub, test locally.\n- Push EVERY task: `git add -A && git commit -m \"Fix: Task X\" && git push origin main`\n\n**Start with Task 1 now.**\n\nLast Updated: $(date)
