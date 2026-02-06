@@ -81,6 +81,40 @@ app.delete('/projects/:id', async (req, res) => {
   }
 });
 
+// ============ PROJECT-SPECIFIC SPACES ============
+app.get('/projects/:projectId/spaces', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const spaces = await prisma.space.findMany({
+      where: { projectId }
+    });
+    res.json(spaces);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch spaces for project' });
+  }
+});
+
+app.post('/projects/:projectId/spaces', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Missing name' });
+
+    // Verify project exists
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const space = await prisma.space.create({
+      data: { name, projectId }
+    });
+    res.status(201).json(space);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create space' });
+  }
+});
+
 // ============ SPACES ============
 app.post('/spaces', async (req, res) => {
   try {
