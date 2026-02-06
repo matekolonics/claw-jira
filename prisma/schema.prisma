@@ -30,26 +30,14 @@ model Space {
 }
 
 model Task {
-  id          String        @id @default(uuid())
+  id          String   @id @default(uuid())
   title       String
   description String?
-  status      TaskStatus    @default(ToDo)
-  priority    TaskPriority  @default(Med)
+  status      String   @default("ToDo")
+  priority    String   @default("Med")
   assignee    String?
   spaceId     String
-  space       Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-}
-
-enum TaskStatus {
-  ToDo
-  InProgress
-  Done
-}
-
-enum TaskPriority {
-  Low
-  Med
-  High
+  space       Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
