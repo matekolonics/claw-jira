@@ -191,7 +191,7 @@ app.post('/tasks', async (req, res) => {
     const task = await prisma.task.create({
       data: {
         title,
-        desc,
+        description: desc,
         status,
         priority,
         assignee,
@@ -235,7 +235,7 @@ app.put('/tasks/:id', async (req, res) => {
       where: { id },
       data: {
         title,
-        desc,
+        description: desc,
         status,
         priority,
         assignee,
