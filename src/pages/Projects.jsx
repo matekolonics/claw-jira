@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import useProjectsStore from '../stores/useProjects'
 
 function Projects() {
   const { projects, loading, error, fetchProjects, createProject, updateProject, deleteProject } = useProjectsStore()
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({ name: '', description: '' })
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({ name: '', description: '' })
@@ -102,7 +103,11 @@ function Projects() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {projects.map(project => (
-                  <tr key={project.id} className="hover:bg-gray-50 transition-colors">
+                  <tr 
+                    key={project.id} 
+                    className={`hover:bg-gray-50 transition-colors cursor-pointer ${editingId === project.id ? 'opacity-50' : ''}`}
+                    onClick={() => !editingId && navigate(`/projects/${project.id}`)}
+                  >
                     <td className="px-6 py-4">
                       {editingId === project.id ? (
                         <input
@@ -117,12 +122,9 @@ function Projects() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <Link
-                        to={`/projects/${project.id}`}
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
-                      >
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
                         View Spaces →
-                      </Link>
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
                       {editingId === project.id ? (
@@ -140,13 +142,19 @@ function Projects() {
                       {editingId === project.id ? (
                         <>
                           <button
-                            onClick={handleSaveEdit}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleSaveEdit()
+                            }}
                             className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
                           >
                             Save
                           </button>
                           <button
-                            onClick={handleCancelEdit}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleCancelEdit()
+                            }}
                             className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
                           >
                             Cancel
