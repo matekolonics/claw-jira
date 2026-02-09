@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import useSpacesStore from '../stores/useSpaces'
 
 function ProjectDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const { spaces, loading, error, fetchSpaces, createSpace, updateSpace, deleteSpace } = useSpacesStore()
   const [project, setProject] = useState(null)
+  const [taskCounts, setTaskCounts] = useState({})
   const [newSpaceName, setNewSpaceName] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
@@ -21,6 +23,27 @@ function ProjectDetail() {
     loadProject()
     fetchSpaces(id)
   }, [id])
+
+  useEffect(() => {
+    const loadTaskCounts = async () => {
+      const counts = {}
+      for (const space of spaces) {
+        try {
+          const res = await fetch(`/api/spaces/${space.id}/count`)
+          if (res.ok) {
+            const count = await res.text()
+            counts[space.id] = parseInt(count, 10) || 0
+          }
+        } catch (err) {
+          console.error('Failed to fetch task count for space', space.id, err)
+        }
+      }
+      setTaskCounts(counts)
+    }
+    if (spaces.length > 0) {
+      loadTaskCounts()
+    }
+  }, [spaces])
 
   const handleCreate = async (e) => {
     e.preventDefault()
@@ -119,13 +142,17 @@ function ProjectDetail() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Kanban</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Tasks</th>
                   <th className="px-6 py-3 text-right text-sm font-medium text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {spaces.map(space => (
-                  <tr key={space.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={space.id}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={editingId !== space.id ? () => navigate(`/projects/${id}/spaces/${space.id}/kanban`) : undefined}
+                  >
                     <td className="px-6 py-4">
                       {editingId === space.id ? (
                         <input
@@ -141,24 +168,19 @@ function ProjectDetail() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <Link
-                        to={`/projects/${id}/spaces/${space.id}/kanban`}
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
-                      >
-                        Open Kanban →
-                      </Link>
+                      <span className="text-gray-600">{taskCounts[space.id] || 0} tasks</span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       {editingId === space.id ? (
                         <>
                           <button
-                            onClick={handleSave}
+                            onClick={(e) => { e.stopPropagation(); handleSave(); }}
                             className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
                           >
                             Save
                           </button>
                           <button
-                            onClick={handleCancel}
+                            onClick={(e) => { e.stopPropagation(); handleCancel(); }}
                             className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
                           >
                             Cancel
@@ -166,14 +188,21 @@ function ProjectDetail() {
                         </>
                       ) : (
                         <>
+                          <Link
+                            to={`/projects/${id}/spaces/${space.id}/kanban`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 inline-block mr-2"
+                          >
+                            Kanban
+                          </Link>
                           <button
-                            onClick={() => handleEdit(space)}
-                            className="px-3 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                            onClick={(e) => { e.stopPropagation(); handleEdit(space); }}
+                            className="px-3 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600 mr-2"
                           >
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDelete(space.id)}
+                            onClick={(e) => { e.stopPropagation(); handleDelete(space.id); }}
                             className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
                           >
                             Delete
