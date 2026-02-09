@@ -4,7 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
@@ -266,6 +266,47 @@ app.delete('/tasks/:id', async (req, res) => {
   }
 });
 
+// ============ SPACE-SPECIFIC TASKS ============
+app.get('/spaces/:spaceId/tasks', async (req, res) => {
+  try {
+    const { spaceId } = req.params;
+    const tasks = await prisma.task.findMany({
+      where: { spaceId }
+    });
+    res.json(tasks);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch tasks for space' });
+  }
+});
+
+app.post('/spaces/:spaceId/tasks', async (req, res) => {
+  try {
+    const { spaceId } = req.params;
+    const { title, desc, status, priority, assignee } = req.body;
+    if (!title) return res.status(400).json({ error: 'Missing title' });
+
+    // Verify space exists
+    const space = await prisma.space.findUnique({ where: { id: spaceId } });
+    if (!space) return res.status(404).json({ error: 'Space not found' });
+
+    const task = await prisma.task.create({
+      data: {
+        title,
+        description: desc,
+        status: status || 'ToDo',
+        priority: priority || 'Med',
+        assignee,
+        spaceId
+      }
+    });
+    res.status(201).json(task);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create task' });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -279,7 +320,7 @@ const startServer = async () => {
     await prisma.$connect();
     console.log('Database connection established successfully.');
 
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
