@@ -13,7 +13,7 @@ const useTasksStore = create(
       fetchTasks: async (spaceId) => {
         set({ loading: true, error: null, currentSpaceId: spaceId })
         try {
-          const response = await fetch(`/api/spaces/${spaceId}/tasks`)
+          const response = await fetch(`/api/spaces/${spaceId}/tasks`, { cache: 'no-store' })
           if (!response.ok) throw new Error('Failed to fetch')
           const data = await response.json()
           set({ tasks: data, loading: false })
@@ -77,19 +77,27 @@ const useTasksStore = create(
       moveTask: async (taskId, newStatus) => {
         const task = get().tasks.find(t => t.id === taskId)
         if (!task) return
-        
+
+        const currentSpaceId = get().currentSpaceId
+
         // Optimistic update
         set({
           tasks: get().tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t)
         })
-        
+
         try {
           const response = await fetch(`/api/tasks/${taskId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...task, status: newStatus }),
+            body: JSON.stringify({ status: newStatus }),
           })
           if (!response.ok) throw new Error('Failed to move')
+
+          // Re-sync with server to avoid stale/local drift
+          if (currentSpaceId) {
+            await get().fetchTasks(currentSpaceId)
+          }
+          toast.success('Task moved')
         } catch (error) {
           // Revert on error
           set({ tasks: get().tasks.map(t => t.id === taskId ? task : t) })

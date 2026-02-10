@@ -14,6 +14,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -261,7 +267,9 @@ app.post('/tasks', async (req, res) => {
 
 app.get('/tasks', async (req, res) => {
   try {
-    const tasks = await prisma.task.findMany();
+    const tasks = await prisma.task.findMany({
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
     res.json(tasks);
   } catch (error) {
     console.error(error);
@@ -321,7 +329,8 @@ app.get('/spaces/:spaceId/tasks', async (req, res) => {
   try {
     const { spaceId } = req.params;
     const tasks = await prisma.task.findMany({
-      where: { spaceId }
+      where: { spaceId },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
     res.json(tasks);
   } catch (error) {
