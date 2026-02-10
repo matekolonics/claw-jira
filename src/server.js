@@ -6,6 +6,7 @@ const { PrismaClient } = require('@prisma/client');
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
+const STARTED_AT = new Date().toISOString();
 
 // Middleware
 app.use(cors({
@@ -18,6 +19,8 @@ app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
+  res.set('X-ClawJira-Pid', String(process.pid));
+  res.set('X-ClawJira-Started-At', STARTED_AT);
   next();
 });
 
