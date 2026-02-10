@@ -168,14 +168,24 @@ function SpaceKanban() {
                       className={`min-h-40 space-y-2 rounded-xl p-1 transition ${snapshot.isDraggingOver ? 'bg-white/60' : ''}`}
                     >
                       {byStatus(column.id).map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
+                        <Draggable
+                          key={task.id}
+                          draggableId={task.id.toString()}
+                          index={index}
+                          disableInteractiveElementBlocking
+                        >
                           {(dragProvided, dragSnapshot) => (
-                            <button
+                            <div
                               ref={dragProvided.innerRef}
                               {...dragProvided.draggableProps}
                               {...dragProvided.dragHandleProps}
                               onClick={() => setSelectedTask(task)}
-                              className={`w-full rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition ${
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') setSelectedTask(task)
+                              }}
+                              className={`w-full cursor-pointer rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition ${
                                 dragSnapshot.isDragging ? 'rotate-1 shadow-lg ring-2 ring-indigo-300' : 'hover:shadow'
                               }`}
                             >
@@ -187,7 +197,7 @@ function SpaceKanban() {
                                 </Badge>
                                 {task.assignee && <Badge>{task.assignee}</Badge>}
                               </div>
-                            </button>
+                            </div>
                           )}
                         </Draggable>
                       ))}
