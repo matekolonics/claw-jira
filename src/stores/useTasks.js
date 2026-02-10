@@ -11,14 +11,17 @@ const useTasksStore = create(
       error: null,
       
       fetchTasks: async (spaceId) => {
-        set({ loading: true, error: null, currentSpaceId: spaceId })
+        set({ loading: true, error: null, currentSpaceId: spaceId, tasks: [] })
         try {
-          const response = await fetch(`/api/spaces/${spaceId}/tasks`, { cache: 'no-store' })
+          const response = await fetch(`/api/spaces/${spaceId}/tasks?_t=${Date.now()}`, {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' },
+          })
           if (!response.ok) throw new Error('Failed to fetch')
           const data = await response.json()
           set({ tasks: data, loading: false })
         } catch (error) {
-          set({ error: error.message, loading: false })
+          set({ tasks: [], error: error.message, loading: false })
           toast.error('Failed to fetch tasks')
         }
       },
@@ -32,7 +35,7 @@ const useTasksStore = create(
           })
           if (!response.ok) throw new Error('Failed to create')
           const newTask = await response.json()
-          set({ tasks: [...get().tasks, newTask] })
+          await get().fetchTasks(spaceId)
           toast.success('Task created')
           return newTask
         } catch (error) {
@@ -50,9 +53,9 @@ const useTasksStore = create(
           })
           if (!response.ok) throw new Error('Failed to update')
           const updated = await response.json()
-          set({
-            tasks: get().tasks.map(t => t.id === taskId ? updated : t)
-          })
+          if (updated.spaceId) {
+            await get().fetchTasks(updated.spaceId)
+          }
           toast.success('Task updated')
           return updated
         } catch (error) {
@@ -64,9 +67,12 @@ const useTasksStore = create(
       deleteTask: async (taskId) => {
         if (!confirm('Are you sure you want to delete this task?')) return
         try {
+          const currentSpaceId = get().currentSpaceId
           const response = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' })
           if (!response.ok) throw new Error('Failed to delete')
-          set({ tasks: get().tasks.filter(t => t.id !== taskId) })
+          if (currentSpaceId) {
+            await get().fetchTasks(currentSpaceId)
+          }
           toast.success('Task deleted')
         } catch (error) {
           toast.error('Failed to delete task')
