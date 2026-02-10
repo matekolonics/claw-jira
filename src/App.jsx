@@ -9,9 +9,9 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-slate-50 text-slate-900">
-        <div className="mx-auto flex max-w-[1600px]">
+        <div className="flex w-full">
           <Sidebar />
-          <main className="min-h-screen flex-1 px-4 py-6 sm:px-6 lg:px-10">
+          <main className="min-h-screen min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10">
             <Routes>
               <Route path="/" element={<Navigate to="/projects" replace />} />
               <Route path="/projects" element={<Projects />} />
