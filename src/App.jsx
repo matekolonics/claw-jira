@@ -8,17 +8,25 @@ import SpaceKanban from './pages/SpaceKanban'
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 flex">
-        <Sidebar />
-        <main className="flex-1 p-6 overflow-auto">
-          <Routes>
-            <Route path="/" element={<Navigate to="/projects" replace />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/projects/:id" element={<ProjectDetail />} />
-            <Route path="/projects/:projectId/spaces/:spaceId/kanban" element={<SpaceKanban />} />
-          </Routes>
-        </main>
-        <Toaster position="top-right" />
+      <div className="min-h-screen bg-slate-50 text-slate-900">
+        <div className="mx-auto flex max-w-[1600px]">
+          <Sidebar />
+          <main className="min-h-screen flex-1 px-4 py-6 sm:px-6 lg:px-10">
+            <Routes>
+              <Route path="/" element={<Navigate to="/projects" replace />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:id" element={<ProjectDetail />} />
+              <Route path="/projects/:projectId/spaces/:spaceId/kanban" element={<SpaceKanban />} />
+            </Routes>
+          </main>
+        </div>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            className: 'text-sm',
+            style: { borderRadius: '12px', border: '1px solid #e2e8f0' },
+          }}
+        />
       </div>
     </Router>
   )

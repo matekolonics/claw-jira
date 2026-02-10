@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { ArrowLeft, LayoutPanelLeft, Pencil, Trash2, Plus } from 'lucide-react'
 import useSpacesStore from '../stores/useSpaces'
 
 function ProjectDetail() {
@@ -15,10 +16,7 @@ function ProjectDetail() {
   useEffect(() => {
     const loadProject = async () => {
       const res = await fetch(`/api/projects/${id}`)
-      if (res.ok) {
-        const data = await res.json()
-        setProject(data)
-      }
+      if (res.ok) setProject(await res.json())
     }
     loadProject()
     fetchSpaces(id)
@@ -31,192 +29,154 @@ function ProjectDetail() {
         try {
           const res = await fetch(`/api/spaces/${space.id}/count`)
           if (res.ok) {
-            const count = await res.text()
-            counts[space.id] = parseInt(count, 10) || 0
+            const data = await res.json()
+            counts[space.id] = data.count || 0
           }
-        } catch (err) {
-          console.error('Failed to fetch task count for space', space.id, err)
+        } catch {
+          counts[space.id] = 0
         }
       }
       setTaskCounts(counts)
     }
-    if (spaces.length > 0) {
-      loadTaskCounts()
-    }
+
+    if (spaces.length > 0) loadTaskCounts()
+    else setTaskCounts({})
   }, [spaces])
 
-  const handleCreate = async (e) => {
-    e.preventDefault()
-    if (!newSpaceName.trim()) return
-    await createSpace(id, newSpaceName.trim())
-    setNewSpaceName('')
-  }
-
-  const handleEdit = (space) => {
-    setEditingId(space.id)
-    setEditName(space.name)
-  }
-
-  const handleSave = async () => {
-    if (!editName.trim()) return
-    await updateSpace(id, editingId, editName.trim())
-    setEditingId(null)
-    setEditName('')
-  }
-
-  const handleCancel = () => {
-    setEditingId(null)
-    setEditName('')
-  }
-
-  const handleDelete = async (spaceId) => {
-    await deleteSpace(id, spaceId)
-  }
-
   if (!project) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-      </div>
-    )
+    return <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-500">Loading project…</div>
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <Link to="/projects" className="text-blue-600 hover:underline text-sm">
-            ← Back to Projects
-          </Link>
-          <h1 className="text-2xl font-bold mt-1">{project.name} - Spaces</h1>
-          {project.description && (
-            <p className="text-gray-600 mt-1">{project.description}</p>
-          )}
-        </div>
-      </div>
+      <header className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+        <Link to="/projects" className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900">
+          <ArrowLeft size={15} /> Back to projects
+        </Link>
+        <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900">{project.name}</h1>
+        <p className="mt-1 text-sm text-slate-500">{project.description || 'No description yet.'}</p>
+      </header>
 
-      {/* Create Space Form */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-4">Add New Space</h2>
-        <form onSubmit={handleCreate} className="flex gap-3">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">New space</h2>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault()
+            if (!newSpaceName.trim()) return
+            await createSpace(id, newSpaceName.trim())
+            setNewSpaceName('')
+          }}
+          className="flex gap-3"
+        >
           <input
             type="text"
-            placeholder="Space name"
             value={newSpaceName}
             onChange={(e) => setNewSpaceName(e.target.value)}
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Space name"
+            className="flex-1 rounded-xl border border-slate-300 px-4 py-2.5 outline-none ring-indigo-500 focus:ring-2"
             required
           />
-          <button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Create Space
+          <button className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 font-medium text-white hover:bg-indigo-700">
+            <Plus size={16} /> Create
           </button>
         </form>
-      </div>
+      </section>
 
-      {/* Spaces List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">Spaces</h2>
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <h2 className="text-base font-semibold">Spaces</h2>
         </div>
-        
+
         {loading ? (
-          <div className="p-8 text-center text-gray-500">
-            <div className="animate-spin inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-2"></div>
-            <p>Loading spaces...</p>
-          </div>
+          <div className="p-8 text-center text-slate-500">Loading spaces…</div>
         ) : error ? (
-          <div className="p-8 text-center text-red-500">
-            <p>Error: {error}</p>
-          </div>
+          <div className="p-8 text-center text-rose-600">Error: {error}</div>
         ) : spaces.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <p>No spaces in this project yet. Create one above!</p>
-          </div>
+          <div className="p-8 text-center text-slate-500">No spaces yet.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Tasks</th>
-                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {spaces.map(space => (
-                  <tr
-                    key={space.id}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={editingId !== space.id ? () => navigate(`/projects/${id}/spaces/${space.id}/kanban`) : undefined}
-                  >
-                    <td className="px-6 py-4">
-                      {editingId === space.id ? (
-                        <input
-                          type="text"
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                          className="w-full px-3 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          autoFocus
-                        />
-                      ) : (
-                        <span className="font-medium">{space.name}</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-gray-600">{taskCounts[space.id] || 0} tasks</span>
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      {editingId === space.id ? (
-                        <>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleSave(); }}
-                            className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleCancel(); }}
-                            className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <Link
-                            to={`/projects/${id}/spaces/${space.id}/kanban`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 inline-block mr-2"
-                          >
-                            Kanban
-                          </Link>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleEdit(space); }}
-                            className="px-3 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600 mr-2"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(space.id); }}
-                            className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-                          >
-                            Delete
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="divide-y divide-slate-100">
+            {spaces.map((space) => {
+              const isEditing = editingId === space.id
+              return (
+                <div key={space.id} className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center">
+                  <div className="min-w-0 flex-1">
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                        autoFocus
+                      />
+                    ) : (
+                      <>
+                        <p className="truncate text-base font-semibold text-slate-900">{space.name}</p>
+                        <p className="text-sm text-slate-500">{taskCounts[space.id] || 0} tasks</p>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {!isEditing ? (
+                      <>
+                        <button
+                          onClick={() => navigate(`/projects/${id}/spaces/${space.id}/kanban`)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                        >
+                          <LayoutPanelLeft size={16} /> Open board
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingId(space.id)
+                            setEditName(space.name)
+                          }}
+                          className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:bg-slate-50"
+                          aria-label="Edit space"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm('Delete this space and all tasks in it?')) return
+                            await deleteSpace(id, space.id)
+                          }}
+                          className="rounded-lg border border-rose-200 p-2 text-rose-600 hover:bg-rose-50"
+                          aria-label="Delete space"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={async () => {
+                            if (!editName.trim()) return
+                            await updateSpace(id, space.id, editName.trim())
+                            setEditingId(null)
+                            setEditName('')
+                          }}
+                          className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingId(null)
+                            setEditName('')
+                          }}
+                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
-      </div>
+      </section>
     </div>
   )
 }

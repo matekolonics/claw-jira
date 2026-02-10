@@ -164,7 +164,10 @@ app.put('/spaces/:id', async (req, res) => {
     const { name, projectId } = req.body;
     const space = await prisma.space.update({
       where: { id },
-      data: { name, projectId }
+      data: {
+        name: name !== undefined ? name : undefined,
+        projectId: projectId !== undefined ? projectId : undefined,
+      }
     });
     res.json(space);
   } catch (error) {
@@ -186,20 +189,66 @@ app.delete('/spaces/:id', async (req, res) => {
   }
 });
 
+app.get('/spaces/:id/count', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const count = await prisma.task.count({ where: { spaceId: id } });
+    res.json({ count });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch task count' });
+  }
+});
+
+app.put('/projects/:projectId/spaces/:spaceId', async (req, res) => {
+  try {
+    const { projectId, spaceId } = req.params;
+    const { name } = req.body;
+
+    const existing = await prisma.space.findFirst({ where: { id: spaceId, projectId } });
+    if (!existing) return res.status(404).json({ error: 'Space not found in project' });
+
+    const updated = await prisma.space.update({
+      where: { id: spaceId },
+      data: { name: name !== undefined ? name : undefined }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update space' });
+  }
+});
+
+app.delete('/projects/:projectId/spaces/:spaceId', async (req, res) => {
+  try {
+    const { projectId, spaceId } = req.params;
+
+    const existing = await prisma.space.findFirst({ where: { id: spaceId, projectId } });
+    if (!existing) return res.status(404).json({ error: 'Space not found in project' });
+
+    await prisma.space.delete({ where: { id: spaceId } });
+    res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to delete space' });
+  }
+});
+
 // ============ TASKS ============
 app.post('/tasks', async (req, res) => {
   try {
-    const { title, desc, status, priority, assignee, spaceId } = req.body;
+    const { title, desc, description, status, priority, assignee, spaceId } = req.body;
     if (!title) return res.status(400).json({ error: 'Missing title' });
 
     const task = await prisma.task.create({
       data: {
         title,
-        description: desc,
+        description: description ?? desc,
         status,
         priority,
         assignee,
-        spaceId: spaceId || null
+        spaceId
       }
     });
     res.status(201).json(task);
@@ -234,15 +283,15 @@ app.get('/tasks/:id', async (req, res) => {
 app.put('/tasks/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, desc, status, priority, assignee, spaceId } = req.body;
+    const { title, desc, description, status, priority, assignee, spaceId } = req.body;
     const task = await prisma.task.update({
       where: { id },
       data: {
-        title,
-        description: desc,
-        status,
-        priority,
-        assignee,
+        title: title !== undefined ? title : undefined,
+        description: description !== undefined ? description : (desc !== undefined ? desc : undefined),
+        status: status !== undefined ? status : undefined,
+        priority: priority !== undefined ? priority : undefined,
+        assignee: assignee !== undefined ? assignee : undefined,
         spaceId: spaceId !== undefined ? spaceId : undefined
       }
     });
@@ -283,7 +332,7 @@ app.get('/spaces/:spaceId/tasks', async (req, res) => {
 app.post('/spaces/:spaceId/tasks', async (req, res) => {
   try {
     const { spaceId } = req.params;
-    const { title, desc, status, priority, assignee } = req.body;
+    const { title, desc, description, status, priority, assignee } = req.body;
     if (!title) return res.status(400).json({ error: 'Missing title' });
 
     // Verify space exists
@@ -293,7 +342,7 @@ app.post('/spaces/:spaceId/tasks', async (req, res) => {
     const task = await prisma.task.create({
       data: {
         title,
-        description: desc,
+        description: description ?? desc,
         status: status || 'ToDo',
         priority: priority || 'Med',
         assignee,

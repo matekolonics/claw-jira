@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { FolderOpen, Pencil, Trash2, Plus } from 'lucide-react'
 import useProjectsStore from '../stores/useProjects'
 
 function Projects() {
@@ -16,174 +17,146 @@ function Projects() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formData.name.trim()) return
-    await createProject(formData)
+    await createProject({
+      name: formData.name.trim(),
+      description: formData.description.trim() || null,
+    })
     setFormData({ name: '', description: '' })
   }
 
-  const handleEdit = (project) => {
-    setEditingId(project.id)
-    setEditData({ name: project.name, description: project.description || '' })
-  }
-
-  const handleSaveEdit = async () => {
-    if (!editData.name.trim()) return
-    await updateProject(editingId, editData)
-    setEditingId(null)
-  }
-
-  const handleCancelEdit = () => {
-    setEditingId(null)
-    setEditData({ name: '', description: '' })
-  }
-
   const handleDelete = async (id) => {
-    if (!confirm('Delete this project?')) return
+    if (!confirm('Delete this project and all of its spaces/tasks?')) return
     await deleteProject(id)
   }
 
   return (
     <div className="space-y-6">
-      {/* Create Project Form */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-4">Add New Project</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+      <header className="rounded-2xl bg-gradient-to-r from-indigo-600 to-cyan-600 p-6 text-white shadow-lg">
+        <h1 className="text-2xl font-bold">Projects</h1>
+        <p className="mt-1 text-sm text-indigo-100">Create, organize, and jump into your delivery spaces.</p>
+      </header>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">New project</h2>
+        <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
           <input
             type="text"
             placeholder="Project name"
             value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+            className="rounded-xl border border-slate-300 px-4 py-2.5 outline-none ring-indigo-500 transition focus:ring-2"
             required
           />
           <input
             type="text"
             placeholder="Description (optional)"
             value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+            className="rounded-xl border border-slate-300 px-4 py-2.5 outline-none ring-indigo-500 transition focus:ring-2"
           />
-          <button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Add Project
+          <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 font-medium text-white hover:bg-indigo-700">
+            <Plus size={16} /> Add
           </button>
         </form>
-      </div>
+      </section>
 
-      {/* Projects List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">Projects</h2>
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <h2 className="text-base font-semibold text-slate-900">All projects</h2>
         </div>
-        
+
         {loading ? (
-          <div className="p-8 text-center text-gray-500">
-            <div className="animate-spin inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-2"></div>
-            <p>Loading projects...</p>
-          </div>
+          <div className="p-8 text-center text-slate-500">Loading projects…</div>
         ) : error ? (
-          <div className="p-8 text-center text-red-500">
-            <p>Error: {error}</p>
-          </div>
+          <div className="p-8 text-center text-rose-600">Error: {error}</div>
         ) : projects.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <p>No projects found. Create one above!</p>
-          </div>
+          <div className="p-8 text-center text-slate-500">No projects yet.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Spaces</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Description</th>
-                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {projects.map(project => (
-                  <tr 
-                    key={project.id} 
-                    className={`hover:bg-gray-50 transition-colors cursor-pointer ${editingId === project.id ? 'opacity-50' : ''}`}
-                    onClick={() => !editingId && navigate(`/projects/${project.id}`)}
-                  >
-                    <td className="px-6 py-4">
-                      {editingId === project.id ? (
+          <div className="divide-y divide-slate-100">
+            {projects.map((project) => {
+              const isEditing = editingId === project.id
+              return (
+                <div key={project.id} className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center">
+                  <div className="min-w-0 flex-1">
+                    {isEditing ? (
+                      <div className="grid gap-2 md:grid-cols-2">
                         <input
-                          type="text"
                           value={editData.name}
-                          onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
-                          className="w-full px-3 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          onChange={(e) => setEditData((p) => ({ ...p, name: e.target.value }))}
+                          className="rounded-lg border border-slate-300 px-3 py-2"
                           autoFocus
                         />
-                      ) : (
-                        <span className="font-medium">{project.name}</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
-                        View Spaces →
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {editingId === project.id ? (
                         <input
-                          type="text"
                           value={editData.description}
-                          onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
-                          className="w-full px-3 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          onChange={(e) => setEditData((p) => ({ ...p, description: e.target.value }))}
+                          className="rounded-lg border border-slate-300 px-3 py-2"
                         />
-                      ) : (
-                        project.description || '-'
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      {editingId === project.id ? (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleSaveEdit()
-                            }}
-                            className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleCancelEdit()
-                            }}
-                            className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => handleEdit(project)}
-                            className="px-3 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(project.id)}
-                            className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-                          >
-                            Delete
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="truncate text-base font-semibold text-slate-900">{project.name}</p>
+                        <p className="truncate text-sm text-slate-500">{project.description || 'No description'}</p>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {!isEditing ? (
+                      <>
+                        <button
+                          onClick={() => navigate(`/projects/${project.id}`)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                        >
+                          <FolderOpen size={16} /> Open
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingId(project.id)
+                            setEditData({ name: project.name, description: project.description || '' })
+                          }}
+                          className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:bg-slate-50"
+                          aria-label="Edit project"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(project.id)}
+                          className="rounded-lg border border-rose-200 p-2 text-rose-600 hover:bg-rose-50"
+                          aria-label="Delete project"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={async () => {
+                            if (!editData.name.trim()) return
+                            await updateProject(project.id, {
+                              name: editData.name.trim(),
+                              description: editData.description.trim() || null,
+                            })
+                            setEditingId(null)
+                          }}
+                          className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
-      </div>
+      </section>
     </div>
   )
 }
